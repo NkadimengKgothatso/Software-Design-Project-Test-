@@ -17,7 +17,7 @@ export function runGit(repoDir, args, { env = {} } = {}) {
 }
 
 export async function countCommits(repoDir, ref = 'HEAD') {
-  const out = await runGit(repoDir, ['rev-list', '--count', '--no-merges', ref]);
+  const out = await runGit(repoDir, ['rev-list', '--count', ref]);
   return parseInt(out.trim(), 10) || 0;
 }
 
@@ -25,7 +25,13 @@ const HASH_RE = /^[0-9a-f]{40}$|^[0-9a-f]{64}$/;
 
 /**
  * Single streaming pass over the whole history:
- *   git log --no-merges -z --numstat -M50%
+ *   git log --diff-merges=off -z --numstat -M50%
+ *
+ * All commits are part of the history H, including merges, so |H| matches the
+ * commit count GitHub shows for a branch. Merge commits themselves carry no
+ * diff (--diff-merges=off is git's default), so branch changes are counted
+ * exactly once on their original commits and never double-counted — merges
+ * only enlarge |H| (and the modFreq / churnRate denominators).
  *
  * Wire format verified empirically (byte-level) against git 2.43:
  *  - the stream is a sequence of NUL-separated tokens
@@ -42,7 +48,7 @@ export function parseLog(repoDir, ref = 'HEAD', { onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const format = '%x00%H%x00%aN%x00%aE%x00%s%x00%ct';
     const proc = spawn('git', [
-      '-C', repoDir, 'log', '--no-merges', '-z', '--numstat', '-M50%',
+      '-C', repoDir, 'log', '--diff-merges=off', '-z', '--numstat', '-M50%',
       `--format=${format}`, ref,
     ]);
     const commits = [];
