@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseLog, countCommits, runGit } from './gitlog.js';
+import { parseLog, countCommits, countAllCommits, runGit } from './gitlog.js';
 import { buildModel } from './model.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -188,6 +188,9 @@ export async function analyzeRepo(id) {
   try {
     const total = await countCommits(root, ref);
     setMeta(id, { progress: { phase: 'analyze', done: 0, total } });
+    // Total reachable commits (merges included) = the count GitHub shows;
+    // display-only, metrics keep the brief's non-merge basis H̄.
+    const totalAll = await countAllCommits(root, ref).catch(() => total);
     const step = Math.max(25, Math.floor(total / 100));
     let last = 0;
     const parsed = await parseLog(root, ref, {
@@ -203,7 +206,7 @@ export async function analyzeRepo(id) {
     setMeta(id, {
       status: 'ready',
       progress: { phase: 'ready', done: total, total },
-      stats: model.baseStats(),
+      stats: { ...model.baseStats(), totalCommits: totalAll },
       analyzedAt: Date.now(),
     }, true);
     return model;

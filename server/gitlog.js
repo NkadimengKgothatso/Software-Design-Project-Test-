@@ -21,6 +21,17 @@ export async function countCommits(repoDir, ref = 'HEAD') {
   return parseInt(out.trim(), 10) || 0;
 }
 
+/**
+ * Total commits reachable from the ref, merge commits included — the number
+ * the repository page (GitHub) shows. The brief defines the metric basis H̄ as
+ * the non-merge commits (countCommits/parseLog above); this total is reported
+ * alongside it for display only and never feeds any metric computation.
+ */
+export async function countAllCommits(repoDir, ref = 'HEAD') {
+  const out = await runGit(repoDir, ['rev-list', '--count', ref]);
+  return parseInt(out.trim(), 10) || 0;
+}
+
 const HASH_RE = /^[0-9a-f]{40}$|^[0-9a-f]{64}$/;
 
 /**
