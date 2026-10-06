@@ -10,10 +10,31 @@ const fmtNum = (n) => (n == null ? '—' : (Math.abs(n) >= 1000 ? fmtInt(Math.ro
 const fmtPct = (n) => (n == null ? '—' : `${(n * 100).toFixed(1)}%`);
 const shortDate = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
 
-const COLORS = ['#e08a4a', '#8b8b86', '#c2542e', '#f5b26b', '#9d1309', '#d4a373', '#a33b1f', '#e6c79c', '#7a7266', '#f97316', '#b45309', '#fca5a5'];
-const GREEN = '#4ade80';
-const RED = '#f87171';
-const ACCENT = '#e08a4a';
+const PALETTES = {
+  light: {
+    colors: ['#58a6f2', '#74dc92', '#14b8a6', '#f79009', '#ee46bc', '#8b5cf6', '#f97316', '#06b6d4', '#12b76a', '#f04438', '#7dd3fc', '#a3e635'],
+    green: '#12b76a', red: '#f04438', accent: '#58a6f2',
+    areaGreen: ['rgba(18,183,106,.32)', 'rgba(18,183,106,.03)'],
+    areaRed: ['rgba(240,68,56,.28)', 'rgba(240,68,56,.03)'],
+    commits: '#9a9ea3',
+    axis: '#ececea', axisLabel: '#9a9ea3', split: '#f1f1ef',
+    legend: '#62676d', barLabel: '#62676d', muted: '#4b5058',
+    hotspot: ['#b9efcd', '#58a6f2'],
+    tip: '#17181a', surface: '#ffffff', others: '#d0d5dd', treeLabel: '#ffffff',
+  },
+  dark: {
+    colors: ['#e08a4a', '#8b8b86', '#c2542e', '#f5b26b', '#9d1309', '#d4a373', '#a33b1f', '#e6c79c', '#7a7266', '#f97316', '#b45309', '#fca5a5'],
+    green: '#4ade80', red: '#f87171', accent: '#e08a4a',
+    areaGreen: ['rgba(74,222,128,.28)', 'rgba(74,222,128,.04)'],
+    areaRed: ['rgba(248,113,113,.26)', 'rgba(248,113,113,.04)'],
+    commits: '#8b8b86',
+    axis: '#2a2926', axisLabel: '#7a7772', split: '#211f1d',
+    legend: '#a8a5a0', barLabel: '#a8a5a0', muted: '#a8a5a0',
+    hotspot: ['#e08a4a', '#9d1309'],
+    tip: '#1c1b19', surface: '#0c0b0b', others: '#5a5854', treeLabel: '#f4f3f1',
+  },
+};
+const T = () => PALETTES[document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'];
 
 const state = {
   repos: [],
@@ -340,16 +361,17 @@ function gradient(x0, y0, x1, y1, from, to) {
 function renderTimeline(d) {
   const c = chart('chartTimeline');
   if (!c) return;
+  const P = T();
   const t = d.timeline || { labels: [], added: [], removed: [], churn: [], commits: [] };
   $('#timelineSub').textContent = t.labels.length ? `${fmtInt(d.range.size)} commits · unit ${t.unit}` : 'no commits in range';
   const removedNeg = t.removed.map((v) => -v);
   c.setOption({
     animationDuration: 300,
     grid: { left: 8, right: 14, top: 36, bottom: 4, containLabel: true },
-    legend: { top: 0, left: 0, icon: 'roundRect', itemWidth: 11, itemHeight: 11, textStyle: { color: '#a8a5a0', fontSize: 12 } },
+    legend: { top: 0, left: 0, icon: 'roundRect', itemWidth: 11, itemHeight: 11, textStyle: { color: P.legend, fontSize: 12 } },
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#1c1b19',
+      backgroundColor: P.tip,
       borderWidth: 0,
       textStyle: { color: '#fff', fontSize: 12 },
       formatter: (ps) => {
@@ -360,26 +382,26 @@ function renderTimeline(d) {
     },
     xAxis: {
       type: 'category', data: t.labels, boundaryGap: false,
-      axisLine: { lineStyle: { color: '#2a2926' } }, axisTick: { show: false },
-      axisLabel: { color: '#7a7772', fontSize: 11, hideOverlap: true },
+      axisLine: { lineStyle: { color: P.axis } }, axisTick: { show: false },
+      axisLabel: { color: P.axisLabel, fontSize: 11, hideOverlap: true },
     },
     yAxis: [
-      { type: 'value', splitLine: { lineStyle: { color: '#211f1d' } }, axisLabel: { color: '#7a7772', fontSize: 11 } },
-      { type: 'value', splitLine: { show: false }, axisLabel: { color: '#7a7772', fontSize: 11 } },
+      { type: 'value', splitLine: { lineStyle: { color: P.split } }, axisLabel: { color: P.axisLabel, fontSize: 11 } },
+      { type: 'value', splitLine: { show: false }, axisLabel: { color: P.axisLabel, fontSize: 11 } },
     ],
     series: [
       {
         name: 'Added', type: 'line', data: t.added, symbol: 'none', lineStyle: { width: 0 },
-        itemStyle: { color: GREEN },
-        areaStyle: { color: gradient(0, 0, 0, 1, 'rgba(74,222,128,.28)', 'rgba(74,222,128,.04)') },
+        itemStyle: { color: P.green },
+        areaStyle: { color: gradient(0, 0, 0, 1, P.areaGreen[0], P.areaGreen[1]) },
       },
       {
         name: 'Removed', type: 'line', data: removedNeg, symbol: 'none', lineStyle: { width: 0 },
-        itemStyle: { color: RED },
-        areaStyle: { color: gradient(0, 1, 0, 0, 'rgba(248,113,113,.26)', 'rgba(248,113,113,.04)') },
+        itemStyle: { color: P.red },
+        areaStyle: { color: gradient(0, 1, 0, 0, P.areaRed[0], P.areaRed[1]) },
       },
-      { name: 'Churn', type: 'line', data: t.churn, symbol: 'none', smooth: true, lineStyle: { width: 2, color: ACCENT, type: 'dashed' }, itemStyle: { color: ACCENT } },
-      { name: 'Commits', type: 'line', yAxisIndex: 1, data: t.commits, symbol: 'none', smooth: true, lineStyle: { width: 2, color: '#8b8b86' }, itemStyle: { color: '#8b8b86' } },
+      { name: 'Churn', type: 'line', data: t.churn, symbol: 'none', smooth: true, lineStyle: { width: 2, color: P.accent, type: 'dashed' }, itemStyle: { color: P.accent } },
+      { name: 'Commits', type: 'line', yAxisIndex: 1, data: t.commits, symbol: 'none', smooth: true, lineStyle: { width: 2, color: P.commits }, itemStyle: { color: P.commits } },
     ],
   }, true);
 }
@@ -387,12 +409,13 @@ function renderTimeline(d) {
 function renderHotspots(d) {
   const c = chart('chartHotspots');
   if (!c) return;
+  const P = T();
   const hs = (d.hotspots || []).slice().reverse();
   c.setOption({
     grid: { left: 4, right: 44, top: 6, bottom: 2, containLabel: true },
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#1c1b19', borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
+      backgroundColor: P.tip, borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
       formatter: (p) => {
         const x = hs[p.dataIndex];
         if (!x) return '';
@@ -402,12 +425,12 @@ function renderHotspots(d) {
     xAxis: { type: 'value', show: false },
     yAxis: {
       type: 'category', data: hs.map((x) => x.path), axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: '#a8a5a0', fontSize: 11.5, width: 180, overflow: 'truncate', fontFamily: 'JetBrains Mono, monospace' },
+      axisLabel: { color: P.muted, fontSize: 11.5, width: 180, overflow: 'truncate', fontFamily: 'JetBrains Mono, monospace' },
     },
     series: [{
       type: 'bar', data: hs.map((x) => x.churn), barWidth: 13,
-      itemStyle: { borderRadius: [0, 7, 7, 0], color: gradient(0, 0, 1, 0, '#e08a4a', '#9d1309') },
-      label: { show: true, position: 'right', color: '#a8a5a0', fontSize: 11, formatter: (p) => fmtInt(p.value) },
+      itemStyle: { borderRadius: [0, 7, 7, 0], color: gradient(0, 0, 1, 0, P.hotspot[0], P.hotspot[1]) },
+      label: { show: true, position: 'right', color: P.barLabel, fontSize: 11, formatter: (p) => fmtInt(p.value) },
     }],
   }, true);
   c.off('click');
@@ -417,25 +440,26 @@ function renderHotspots(d) {
 function renderOwners(d) {
   const c = chart('chartOwners');
   if (!c) return;
+  const P = T();
   const rk = (d.ranking || []).filter((x) => x.churn > 0);
   const total = rk.reduce((s, x) => s + x.churn, 0);
   $('#ownSub').textContent = total ? `churn share · ${fmtInt(total)} total` : 'no churn in range';
-  const data = rk.slice(0, 8).map((x, i) => ({ name: x.name, value: x.churn, itemStyle: { color: COLORS[i % COLORS.length] } }));
+  const data = rk.slice(0, 8).map((x, i) => ({ name: x.name, value: x.churn, itemStyle: { color: P.colors[i % P.colors.length] } }));
   const rest = rk.slice(8).reduce((s, x) => s + x.churn, 0);
-  if (rest > 0) data.push({ name: 'others', value: rest, itemStyle: { color: '#5a5854' } });
+  if (rest > 0) data.push({ name: 'others', value: rest, itemStyle: { color: P.others } });
   c.setOption({
     tooltip: {
-      trigger: 'item', backgroundColor: '#1c1b19', borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
+      trigger: 'item', backgroundColor: P.tip, borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
       formatter: (p) => `<b>${esc(p.name)}</b><br>churn ${fmtInt(p.value)} · ${p.percent.toFixed(1)}%`,
     },
     legend: {
       orient: 'vertical', right: 4, top: 'middle', icon: 'circle', itemWidth: 9, itemHeight: 9,
-      textStyle: { color: '#a8a5a0', fontSize: 11.5 }, type: 'scroll',
+      textStyle: { color: P.muted, fontSize: 11.5 }, type: 'scroll',
       formatter: (nm) => (nm.length > 20 ? `${nm.slice(0, 19)}…` : nm),
     },
     series: [{
       type: 'pie', radius: ['54%', '78%'], center: ['34%', '50%'], padAngle: 2,
-      itemStyle: { borderRadius: 8, borderColor: '#0c0b0b', borderWidth: 2 },
+      itemStyle: { borderRadius: 8, borderColor: P.surface, borderWidth: 2 },
       label: { show: false }, data,
     }],
   }, true);
@@ -444,6 +468,7 @@ function renderOwners(d) {
 function renderTreemap(d) {
   const c = chart('chartTreemap');
   if (!c) return;
+  const P = T();
   const kids = d.children || [];
   const data = kids.map((k, i) => ({
     name: k.name + (k.type === 'dir' ? '/' : ''),
@@ -451,11 +476,11 @@ function renderTreemap(d) {
     path: k.path,
     churn: k.churn,
     mods: k.modifications,
-    itemStyle: { color: COLORS[i % COLORS.length] },
+    itemStyle: { color: P.colors[i % P.colors.length] },
   }));
   c.setOption({
     tooltip: {
-      backgroundColor: '#1c1b19', borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
+      backgroundColor: P.tip, borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
       formatter: (p) => (p.data && p.data.path
         ? `<b>${esc(p.data.path)}</b><br>churn ${fmtInt(p.data.churn)}<br>${fmtInt(p.data.mods)} modifications`
         : ''),
@@ -463,8 +488,8 @@ function renderTreemap(d) {
     series: [{
       type: 'treemap', roam: false, nodeClick: false, breadcrumb: { show: false },
       width: '100%', height: '100%',
-      itemStyle: { borderColor: '#0c0b0b', borderWidth: 2, gapWidth: 2, borderRadius: 8 },
-      label: { show: true, fontSize: 12, fontWeight: 600, color: '#f4f3f1', formatter: (p) => p.name },
+      itemStyle: { borderColor: P.surface, borderWidth: 2, gapWidth: 2, borderRadius: 8 },
+      label: { show: true, fontSize: 12, fontWeight: 600, color: P.treeLabel, formatter: (p) => p.name },
       emphasis: { itemStyle: { shadowBlur: 10 } },
       data,
     }],
