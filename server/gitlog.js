@@ -66,9 +66,10 @@ export function parseLog(repoDir, ref = 'HEAD', { onProgress } = {}) {
           if (rename.binary) {
             stats.binaries++;
           } else {
-            // A pure rename changes no lines, but the new path is part of the
-            // tree: register it with zero metrics (edits on a rename are already
-            // attributed to the new path).
+            // A rename changes no lines: register the old path too (it stays
+            // addressable, with zero metrics) and give the new path the
+            // edit counts of the rename pair, if any.
+            cur.entries.push({ path: rename.paths[0], added: 0, removed: 0 });
             cur.entries.push({ path: rename.paths[1], added: rename.added, removed: rename.removed });
           }
           rename = null;
