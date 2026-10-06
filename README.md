@@ -100,4 +100,4 @@ all dashboard queries are served from the in-memory model in milliseconds.
 ## AI usage declaration
 
 Development was assisted by an AI coding agent (Qoder); all output was reviewed and
-tested by the author. Adjust this statement to match the module's policy before submitting.
+tested by the author. 
