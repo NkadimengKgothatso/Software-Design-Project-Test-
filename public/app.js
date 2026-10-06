@@ -767,6 +767,14 @@ function wire() {
   $('#modal').addEventListener('click', (e) => { if (e.target === $('#modal')) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
+  document.querySelectorAll('#themeToggle .seg-btn').forEach((btn) => {
+    btn.onclick = () => {
+      applyTheme(btn.dataset.mode);
+      if (state.dash) renderCharts(state.dash); // chart palettes live in chart options
+    };
+  });
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+
   window.addEventListener('resize', () => {
     Object.values(state.charts).forEach((c) => { try { c.resize(); } catch { /* noop */ } });
   });
@@ -781,6 +789,16 @@ async function boot() {
   } catch (e) {
     toast(`Cannot reach the server: ${e.message}`, 'error');
   }
+}
+
+// ---- theme (light | dark, default light) --------------------------------------
+
+function applyTheme(mode) {
+  const dark = mode === 'dark';
+  if (dark) document.documentElement.dataset.theme = 'dark';
+  else delete document.documentElement.dataset.theme;
+  try { localStorage.setItem('rat-theme', dark ? 'dark' : 'light'); } catch (e) { /* storage unavailable */ }
+  document.querySelectorAll('#themeToggle .seg-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === (dark ? 'dark' : 'light')));
 }
 
 boot();
