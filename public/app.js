@@ -76,7 +76,9 @@ function toast(msg, type = 'info') {
 function repoSub(r) {
   if (r.status === 'ready') {
     const s = r.stats || {};
-    return `${fmtInt(s.commits)} commits · ${fmtInt(s.objects)} objects · ${fmtInt(s.authors)} authors`;
+    // totalCommits (merges included) is the count GitHub shows; the metric
+    // basis per the brief is the non-merge history H̄.
+    return `${fmtInt(s.totalCommits ?? s.commits)} commits · ${fmtInt(s.objects)} objects · ${fmtInt(s.authors)} authors`;
   }
   if (r.status === 'error') return r.error || 'error';
   if (r.status === 'cloning') return `cloning… ${r.progress?.pct ?? 0}%`;
@@ -257,7 +259,11 @@ function renderTitles(d) {
   const s = d.stats || {};
   $('#repoTitle').textContent = d.repo.name;
   const span = s.firstTs && s.lastTs ? `${shortDate(s.firstTs)} → ${shortDate(s.lastTs)}` : '';
-  $('#repoMeta').textContent = `${fmtInt(s.commits)} commits · ${fmtInt(s.objects)} objects · ${fmtInt(s.authors)} authors · ref ${d.repo.ref}${span ? ` · ${span}` : ''}`;
+  const commits = s.totalCommits != null
+    ? `${fmtInt(s.totalCommits)} commits total · ${fmtInt(s.commits)} analysed (non-merge)`
+    : `${fmtInt(s.commits)} commits`;
+  $('#repoMeta').textContent = `${commits} · ${fmtInt(s.objects)} objects · ${fmtInt(s.authors)} authors · ref ${d.repo.ref}${span ? ` · ${span}` : ''}`;
+  $('#repoMeta').title = 'Metrics are computed over H̄, the non-merge commits reachable from the ref (per the test brief). The total includes merge commits and matches the count shown on GitHub.';
   const chip = $('#statusChip');
   chip.className = 'chip green';
   chip.textContent = `${fmtInt(d.range.size)} commits in set`;
