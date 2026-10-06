@@ -75,7 +75,7 @@ const ranking = model.authorRanking(all);
 check('ranking size', ranking.length, 2);
 check('ranking first is Alice', ranking[0].name, 'Alice Author');
 check('ranking Alice churn', ranking[0].churn, 19);
-check('ranking Bob commits', ranking.find((r) => r.name === 'Bob').commits, 3);
+check('ranking Bob commits', ranking.find((r) => r.name === 'Bob').commits, 2);
 
 // ---- commit-set metrics: time range [day1, day4) => c2, c3, c4 ------------
 const range = model.resolveRange({ from: BASE_TS + 1 * DAY, to: BASE_TS + 4 * DAY });

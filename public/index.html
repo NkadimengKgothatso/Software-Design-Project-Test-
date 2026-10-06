@@ -1,20 +1,149 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RAT — Repo Analysis Tool</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #0f1115; color: #e6e8ee; display: grid; place-items: center; height: 100vh; margin: 0; }
-    .card { text-align: center; }
-    h1 { font-weight: 650; letter-spacing: -0.5px; }
-    p { color: #9aa3b2; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
-  <div class="card">
-    <h1>RAT — Repo Analysis Tool</h1>
-    <p>Dashboard is being built. Check back in a bit.</p>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="logo">RAT</span>
+        <div>
+          <h1>Repo Analysis</h1>
+          <p>git history metrics</p>
+        </div>
+      </div>
+
+      <div class="side-scroll">
+        <div class="section-label">Repositories</div>
+        <div id="repoList" class="repo-list"></div>
+
+        <div class="add-repo card">
+          <div class="section-label">Add repository</div>
+          <input id="repoUrl" type="text" placeholder="https://github.com/user/repo.git" spellcheck="false">
+          <input id="repoRef" type="text" placeholder="ref — default HEAD" spellcheck="false">
+          <button id="cloneBtn" class="btn btn-primary">Clone URL</button>
+          <button id="zipBtn" class="btn btn-ghost">Upload .zip (incl. .git)</button>
+          <input id="zipInput" type="file" accept=".zip" hidden>
+        </div>
+      </div>
+
+      <div class="sidebar-foot">COMS3011A · Repo Analysis Tool</div>
+    </aside>
+
+    <main class="main">
+      <div id="emptyState" class="empty-state">
+        <div class="hero card">
+          <div class="hero-kicker">Repository analytics</div>
+          <h2>Measure the evolution of any git repository</h2>
+          <p>Add a repository on the left — clone a remote URL, or upload a <b>.zip</b> that includes its <code>.git</code> directory.
+             Filter by author, path and commit set; every metric updates live.</p>
+          <div class="quick">
+            <span class="muted">Quick start:</span>
+            <button class="chip-btn" data-url="https://github.com/DaveGamble/cJSON.git">Analyze cJSON</button>
+            <button class="chip-btn" data-url="https://github.com/redis/redis.git">Analyze Redis</button>
+            <button class="chip-btn" data-url="https://github.com/git/git.git">Analyze git.git (large)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="dash" class="dash hidden">
+        <header class="topbar">
+          <div class="topbar-info">
+            <h2 id="repoTitle">—</h2>
+            <p id="repoMeta" class="muted">—</p>
+          </div>
+          <div class="topbar-actions">
+            <span id="statusChip" class="chip hidden"></span>
+            <button id="mergeBtn" class="btn btn-ghost btn-sm" title="Merge author identities (manual author merging)">Merge authors</button>
+            <button id="refreshBtn" class="btn btn-ghost btn-sm">Refresh</button>
+          </div>
+        </header>
+
+        <div id="busyBar" class="busy card hidden">
+          <div class="busy-text">
+            <span class="spinner"></span>
+            <span id="busyLabel">Working…</span>
+          </div>
+          <div class="progress"><div id="busyProgress"></div></div>
+        </div>
+
+        <div id="dashBody">
+          <section class="filters card">
+            <div class="filter">
+              <label>Author</label>
+              <select id="authorSel"><option value="">All authors</option></select>
+            </div>
+            <div class="filter">
+              <label>Object</label>
+              <button id="objectBtn" class="picker-btn" title="Filter by file or directory">/ (root)</button>
+            </div>
+            <div class="filter grow">
+              <label>Period</label>
+              <div class="range-inputs">
+                <input type="date" id="fromDate"><span class="arrow">→</span><input type="date" id="toDate">
+              </div>
+              <div class="presets">
+                <button class="chip-btn active" data-days="0">All</button>
+                <button class="chip-btn" data-days="30">30d</button>
+                <button class="chip-btn" data-days="90">90d</button>
+                <button class="chip-btn" data-days="365">1y</button>
+              </div>
+            </div>
+            <div class="filter">
+              <label>Commit set</label>
+              <button id="commitsBtn" class="btn btn-ghost btn-sm">Manual selection</button>
+              <span id="commitBadge" class="badge hidden"></span>
+            </div>
+            <div class="filter-actions">
+              <button id="resetBtn" class="btn btn-ghost btn-sm">Reset</button>
+            </div>
+          </section>
+
+          <section id="metricCards" class="metrics"></section>
+
+          <section class="charts">
+            <div class="card chart-card wide">
+              <div class="card-head"><h3>History</h3><span class="muted" id="timelineSub"></span></div>
+              <div id="chartTimeline" class="chart"></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><h3>Hotspots by churn</h3><span class="muted">top files · click to drill in</span></div>
+              <div id="chartHotspots" class="chart"></div>
+            </div>
+            <div class="card chart-card">
+              <div class="card-head"><h3>Author ownership</h3><span class="muted" id="ownSub">share of churn</span></div>
+              <div id="chartOwners" class="chart"></div>
+            </div>
+            <div class="card chart-card wide">
+              <div class="card-head"><h3>Directory breakdown</h3><span class="muted">churn per immediate child · click to drill in</span></div>
+              <div id="chartTreemap" class="chart chart-tall"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
   </div>
+
+  <div id="toasts" class="toasts"></div>
+  <div id="modal" class="modal hidden">
+    <div class="modal-card card">
+      <div class="modal-head">
+        <h3 id="modalTitle">—</h3>
+        <button id="modalClose" class="icon-btn" title="Close">×</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+      <div id="modalFoot" class="modal-foot"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

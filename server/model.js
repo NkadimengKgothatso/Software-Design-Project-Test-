@@ -288,40 +288,25 @@ export class RepoModel {
     return out;
   }
 
-  authorRanking(range) {
-    const ck = `ar|${range.key}`;
+  authorRanking(range, objId = this.rootId) {
+    const ck = `ar|${objId}|${range.key}`;
     const hit = this.cache.get(ck);
     if (hit) return hit;
 
-    const acc = new Map(); // gid -> { added, removed, churn, commits }
-    this.#scan(this.rootId, range, null, (a, r, ci) => {
+    const acc = new Map(); // gid -> { added, removed, churn, commits = modifications }
+    this.#scan(objId, range, null, (a, r, ci) => {
       const gid = this.groupOf(this.cAuthor[ci]);
       let e = acc.get(gid);
       if (!e) { e = { added: 0, removed: 0, churn: 0, commits: 0 }; acc.set(gid, e); }
+      if (a + r > 0) e.commits++; // m: commits by the author that modify this object
       e.added += a;
       e.removed += r;
       e.churn += a + r;
     });
-    // Commit counts come from the commit set itself (a pure rename or mode-only
-    // commit has no line entries yet still counts as an authored commit).
-    if (range.kind === 'range') {
-      for (let ci = range.lo; ci < range.hi; ci++) {
-        const gid = this.groupOf(this.cAuthor[ci]);
-        let e = acc.get(gid);
-        if (!e) { e = { added: 0, removed: 0, churn: 0, commits: 0 }; acc.set(gid, e); }
-        e.commits++;
-      }
-    } else {
-      for (const ci of range.list) {
-        const gid = this.groupOf(this.cAuthor[ci]);
-        let e = acc.get(gid);
-        if (!e) { e = { added: 0, removed: 0, churn: 0, commits: 0 }; acc.set(gid, e); }
-        e.commits++;
-      }
-    }
 
     const totalChurn = [...acc.values()].reduce((s, e) => s + e.churn, 0);
     const out = [...acc.entries()]
+      .filter(([, e]) => e.churn > 0)
       .map(([gid, e]) => ({
         id: gid,
         name: this.authors[gid]?.name ?? `author ${gid}`,
@@ -408,6 +393,36 @@ export class RepoModel {
     }
     out.sort((a, b) => b.churn - a.churn);
     return out.slice(0, limit);
+  }
+
+  /** Immediate children (files + subdirectories) of a directory, with metrics. */
+  childrenMetrics(objId, range, gid = null) {
+    const obj = this.objects[objId];
+    if (!obj || obj.type !== 'dir') return [];
+    const ck = `ch|${objId}|${range.key}|${gid ?? '-'}`;
+    const hit = this.cache.get(ck);
+    if (hit) return hit;
+
+    const prefix = obj.path === ROOT ? '' : `${obj.path}/`;
+    const seen = new Set();
+    const out = [];
+    for (let id = 0; id < this.objects.length; id++) {
+      const o = this.objects[id];
+      if (!o.path.startsWith(prefix) || o.path === obj.path) continue;
+      const seg = o.path.slice(prefix.length).split('/')[0];
+      const childPath = prefix + seg;
+      if (seen.has(childPath)) continue;
+      seen.add(childPath);
+      const childId = this.objectId.get(childPath);
+      if (childId === undefined) continue;
+      const m = this.metrics(childId, range, gid);
+      if (m.churn > 0 || m.modifications > 0) {
+        out.push({ path: childPath, name: seg, type: this.objects[childId].type, ...m });
+      }
+    }
+    out.sort((a, b) => b.churn - a.churn);
+    this.#put(ck, out);
+    return out;
   }
 
   tree() {

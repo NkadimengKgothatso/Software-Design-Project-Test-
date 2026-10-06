@@ -63,8 +63,12 @@ export function parseLog(repoDir, ref = 'HEAD', { onProgress } = {}) {
         rename.paths.push(rawToken);
         if (rename.paths.length === 2) {
           stats.renames++;
-          if (rename.added > 0 || rename.removed > 0) {
-            // Defensive: a rename carrying edits is attributed to its new path.
+          if (rename.binary) {
+            stats.binaries++;
+          } else {
+            // A pure rename changes no lines, but the new path is part of the
+            // tree: register it with zero metrics (edits on a rename are already
+            // attributed to the new path).
             cur.entries.push({ path: rename.paths[1], added: rename.added, removed: rename.removed });
           }
           rename = null;
@@ -110,8 +114,9 @@ export function parseLog(repoDir, ref = 'HEAD', { onProgress } = {}) {
       if (binary) { stats.binaries++; return; }
       const added = parseInt(addedStr, 10);
       const removed = parseInt(removedStr, 10);
-      if (!added && !removed) { stats.ignored++; return; } // mode-only / empty changes
-      cur.entries.push({ path, added, removed });
+      // Zero-line entries (empty file add, mode-only change) still register the
+      // object in the tree; they simply contribute nothing to any metric.
+      cur.entries.push({ path, added: added || 0, removed: removed || 0 });
     }
 
     proc.stdout.setEncoding('utf8');
