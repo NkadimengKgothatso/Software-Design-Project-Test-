@@ -60,7 +60,10 @@ const near = (a, b) => (Number.isFinite(a) && Number.isFinite(b) ? Math.abs(a - 
 // commit set size
 note(range.size === refCommitCount, `commit set size |H|`, range.size, refCommitCount);
 
-const objIdFor = (type, path) => (type === 'repository' ? model.rootId : model.idOf(path));
+const objIdFor = (type, path) => {
+  if (type === 'repository') return model.rootId;
+  return type === 'directory' ? model.dirIdOf(path) : model.fileIdOf(path);
+};
 
 // group rows by object
 const byObject = new Map();

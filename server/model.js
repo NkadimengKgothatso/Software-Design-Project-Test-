@@ -91,8 +91,7 @@ export class RepoModel {
       this.cChurn[ci] = churn;
     }
 
-    if (!this.objectId.has(ROOT)) this.ensureObject(ROOT, 'dir');
-    this.rootId = this.objectId.get(ROOT);
+    this.rootId = this.ensureObject(ROOT, 'dir');
 
     this.mergeMap = new Map(); // authorId -> groupId
     this.mergeVersion = 0;
@@ -101,22 +100,26 @@ export class RepoModel {
   }
 
   ensureObject(path, type) {
-    let id = this.objectId.get(path);
+    // Objects are keyed by (type, path): a path can be a file early in history
+    // and a directory later (e.g. "git-gui" in git.git), and the two carry
+    // different metrics (direct line entries vs. subtree sums).
+    const key = `${type === 'dir' ? 'd' : 'f'}\u0000${path}`;
+    let id = this.objectId.get(key);
     if (id === undefined) {
       id = this.objects.length;
       this.objects.push({ path, type });
-      this.objectId.set(path, id);
+      this.objectId.set(key, id);
       this.objC.push([]);
       this.objA.push([]);
       this.objR.push([]);
-    } else if (type === 'dir' && this.objects[id].type !== 'dir') {
-      this.objects[id].type = 'dir';
     }
     return id;
   }
 
   authorIdOf(name, email) {
-    const key = `${name}\u0000${email.toLowerCase()}`;
+    // Identities are exact (name, email) pairs — same as git's %aN/%aE output;
+    // merging alias identities is the job of .mailmap and the manual merge UI.
+    const key = `${name}\u0000${email}`;
     let id = this.authorKey.get(key);
     if (id === undefined) {
       id = this.authors.length;
@@ -128,7 +131,15 @@ export class RepoModel {
 
   // ---- public API -------------------------------------------------------
 
-  idOf(path) { return this.objectId.get(path); }
+  /** Directory object wins when a path exists as both (matches the tree view). */
+  idOf(path) {
+    const d = this.objectId.get(`d\u0000${path}`);
+    return d !== undefined ? d : this.objectId.get(`f\u0000${path}`);
+  }
+
+  fileIdOf(path) { return this.objectId.get(`f\u0000${path}`); }
+
+  dirIdOf(path) { return this.objectId.get(`d\u0000${path}`); }
 
   listObjects() {
     return this.objects.map((o, i) => ({ id: i, path: o.path, type: o.type }));
@@ -413,7 +424,7 @@ export class RepoModel {
       const childPath = prefix + seg;
       if (seen.has(childPath)) continue;
       seen.add(childPath);
-      const childId = this.objectId.get(childPath);
+      const childId = this.idOf(childPath);
       if (childId === undefined) continue;
       const m = this.metrics(childId, range, gid);
       if (m.churn > 0 || m.modifications > 0) {
@@ -438,12 +449,13 @@ export class RepoModel {
       dirNodes.set(p, node);
       return node;
     };
+    const dirSet = new Set(this.objects.filter((o) => o.type === 'dir').map((o) => o.path));
     for (const o of this.objects) {
       if (o.path === ROOT) continue;
       const i = o.path.lastIndexOf('/');
       const parent = ensureDir(i === -1 ? ROOT : o.path.slice(0, i));
       if (o.type === 'dir') ensureDir(o.path);
-      else parent.children.push({ name: o.path.slice(i + 1), path: o.path, type: 'file' });
+      else if (!dirSet.has(o.path)) parent.children.push({ name: o.path.slice(i + 1), path: o.path, type: 'file' });
     }
     const sortRec = (node) => {
       node.children.sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1));
