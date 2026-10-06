@@ -41,10 +41,12 @@ For a set of commits H and an object o (file, directory, repository):
 | ω | ownership | author's churn on o / total churn on o |
 
 Directories aggregate their recursive subtree; the repository is the root.
-Binary files and merge commits are excluded (H is the non-merge history of HEAD);
-renames are detected with `-M50%`, pure renames contribute no lines and both the
-old and new path remain addressable objects. Author identities are exact
-`(name, email)` pairs; grouping distinct identities is an explicit user action
+H̄ is the non-merge history of HEAD (exactly as the brief defines it — binary files
+and merge commits are excluded from every metric). The dashboard also reports the
+total reachable commit count (merges included, i.e. the number GitHub shows) for
+context, but no metric uses it. Renames are detected with `-M50%`, pure renames
+contribute no lines and both the old and new path remain addressable objects. Author
+identities are exact `(name, email)` pairs; grouping distinct identities is an explicit user action
 (`.mailmap` is applied automatically, manual merges merge further).
 
 ## Architecture
@@ -65,7 +67,7 @@ old and new path remain addressable objects. Author identities are exact
 
 ## Validation
 
-- Fixture repository with hand-computed golden values: **110/110 assertions** (`npm test`).
+- Fixture repository with hand-computed golden values: **111/111 assertions** (`npm test`).
 - Golden reference metric CSVs for three public repositories at pinned commits:
 
 | repo | ref | non-merge commits | rows checked | result |
@@ -77,7 +79,8 @@ old and new path remain addressable objects. Author identities are exact
 Every object's added/removed/growth/churn/modifications/modification-frequency/churn-rate
 and every per-author added/removed/churn/ownership value matches the reference exactly
 (including case-sensitive author identities, file-vs-directory object namespacing and
-rename end-points). Run:
+rename end-points). The validator also cross-checks each CSV's commit_count against
+`git rev-list --count --no-merges` at the pinned ref. Run:
 
 ```bash
 node scripts/validate-reference.js <repo-dir> <reference.csv> [--full]
