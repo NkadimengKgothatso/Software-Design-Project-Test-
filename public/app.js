@@ -295,7 +295,7 @@ function renderCards(d) {
     { key: 'added', label: 'Lines added', value: fmtInt(m.added), tone: 'green' },
     { key: 'removed', label: 'Lines removed', value: fmtInt(m.removed), tone: 'red' },
     { key: 'growth', label: 'Growth', value: fmtInt(m.growth), tone: m.growth >= 0 ? 'green' : 'red' },
-    { key: 'churn', label: 'Churn', value: fmtInt(m.churn), tone: 'amber' },
+    { key: 'churn', label: 'Churn', value: fmtInt(m.churn), tone: 'amber', grad: true },
     { key: 'modifications', label: 'Modifications', value: fmtInt(m.modifications) },
     { key: 'modFreq', label: 'Modification freq.', value: fmtPct(m.modFreq) },
     { key: 'churnRate', label: 'Churn rate', value: fmtNum(m.churnRate) },
@@ -303,7 +303,7 @@ function renderCards(d) {
   ];
   if (m.ownership != null) cards.push({ key: 'ownership', label: 'Ownership (author)', value: fmtPct(m.ownership), tone: 'violet' });
   $('#metricCards').innerHTML = cards.map((c) => `
-    <div class="card metric ${c.tone || ''}">
+    <div class="card metric ${c.tone || ''} ${c.grad ? 'grad' : ''}">
       <span data-tip="?" data-tip-content="${esc(CARD_TIP[c.key])}">?</span>
       <div class="metric-label">${c.label}</div>
       <div class="metric-value">${c.value}</div>
@@ -425,7 +425,7 @@ function renderOwners(d) {
   if (rest > 0) data.push({ name: 'others', value: rest, itemStyle: { color: '#d0d5dd' } });
   c.setOption({
     tooltip: {
-      trigger: 'item', backgroundColor: '#101828', borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
+      trigger: 'item', backgroundColor: '#17181a', borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 },
       formatter: (p) => `<b>${esc(p.name)}</b><br>churn ${fmtInt(p.value)} · ${p.percent.toFixed(1)}%`,
     },
     legend: {
