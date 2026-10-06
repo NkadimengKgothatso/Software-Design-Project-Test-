@@ -4,7 +4,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildFixture, BASE_TS } from './fixture.js';
-import { parseLog, countCommits } from '../server/gitlog.js';
+import { parseLog, countCommits, countAllCommits } from '../server/gitlog.js';
 import { buildModel } from '../server/model.js';
 
 const DAY = 86400;
@@ -26,6 +26,7 @@ const { hashes } = buildFixture(fixtureDir);
 
 const count = await countCommits(fixtureDir, 'HEAD');
 check('parsed commit count (merges excluded)', count, 8);
+check('total commit count (merges included, = GitHub-style)', await countAllCommits(fixtureDir, 'HEAD'), 9);
 
 const parsed = await parseLog(fixtureDir, 'HEAD');
 const model = buildModel(parsed);

@@ -5,6 +5,7 @@
 //   --full  also compare per-author rows for every object (fine on small repos)
 
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { parseLog } from '../server/gitlog.js';
 import { buildModel } from '../server/model.js';
 
@@ -45,6 +46,12 @@ console.log(`parsed ${parsed.commits.length} non-merge commits in ${((Date.now()
 const { rows } = parseCsv(fs.readFileSync(csvPath, 'utf8'));
 const refCommitCount = Number(rows[0].commit_count);
 
+// The brief defines the metric basis H̄ as the non-merge commits reachable from
+// the ref, and the CSV's commit_count column is |H̄|. Cross-check that against
+// git so a mismatch between the reference export and the resolved clone is
+// reported explicitly.
+const gitCount = Number(execFileSync('git', ['-C', dir, 'rev-list', '--count', '--no-merges', 'HEAD'], { encoding: 'utf8' }).trim());
+
 let pass = 0;
 let fail = 0;
 const failures = [];
@@ -59,6 +66,7 @@ const near = (a, b) => (Number.isFinite(a) && Number.isFinite(b) ? Math.abs(a - 
 
 // commit set size
 note(range.size === refCommitCount, `commit set size |H|`, range.size, refCommitCount);
+note(gitCount === refCommitCount, `CSV commit_count equals git non-merge count`, refCommitCount, gitCount);
 
 const objIdFor = (type, path) => {
   if (type === 'repository') return model.rootId;
