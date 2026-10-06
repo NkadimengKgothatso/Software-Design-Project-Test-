@@ -139,6 +139,7 @@ export function parseLog(repoDir, ref = 'HEAD', { onProgress } = {}) {
       if (code !== 0) return reject(new Error(`git log failed (${code}): ${err.trim()}`));
       if (buf.length) feed(buf);
       if (cur) commits.push(cur);
+      if (onProgress) onProgress(commits.length); // make sure progress reaches 100%
       resolve({ commits, stats });
     });
   });
