@@ -1,16 +1,18 @@
-/* RAT dashboard — clean SaaS aesthetic: soft canvas, white cards, pill chips. */
+/* RAT dashboard — Orion-style light UI: warm soft canvas, rounded white cards,
+ * glassy pill chips and a green→blue gradient accent (RonDesignLab reference). */
 
 :root {
-  --bg: #f5f6fa;
+  --bg: #f7f7f5;
   --card: #ffffff;
-  --border: #e8ebf1;
-  --border-strong: #d9dee7;
-  --text: #101828;
-  --muted: #667085;
-  --faint: #98a2b3;
-  --accent: #4f46e5;
-  --accent-2: #7c3aed;
-  --accent-soft: #eef2ff;
+  --border: #ececea;
+  --border-strong: #e0e0dc;
+  --text: #17181a;
+  --muted: #62676d;
+  --faint: #9a9ea3;
+  --accent: #46b97f;
+  --accent-2: #58a6f2;
+  --accent-soft: #eef8f2;
+  --grad: linear-gradient(135deg, #74dc92 0%, #58a6f2 100%);
   --green: #12b76a;
   --green-soft: #ecfdf3;
   --red: #f04438;
@@ -18,10 +20,10 @@
   --amber: #f79009;
   --amber-soft: #fffaeb;
   --violet: #7c3aed;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, .05);
-  --shadow-md: 0 6px 20px rgba(16, 24, 40, .07);
-  --radius: 14px;
-  --radius-sm: 10px;
+  --shadow-sm: 0 1px 2px rgba(23, 24, 26, .03), 0 8px 22px rgba(23, 24, 26, .045);
+  --shadow-md: 0 12px 34px rgba(23, 24, 26, .09);
+  --radius: 24px;
+  --radius-sm: 14px;
 }
 
 * { box-sizing: border-box; }
@@ -34,8 +36,8 @@ body {
   font-size: 14px;
   color: var(--text);
   background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(79, 70, 229, .06), transparent 60%),
-    radial-gradient(900px 400px at -10% 110%, rgba(124, 58, 237, .05), transparent 60%),
+    radial-gradient(1100px 480px at 88% -12%, rgba(116, 220, 146, .10), transparent 60%),
+    radial-gradient(900px 420px at -8% 112%, rgba(88, 166, 242, .09), transparent 60%),
     var(--bg);
   -webkit-font-smoothing: antialiased;
 }
@@ -61,11 +63,11 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
 .side-scroll { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding-right: 2px; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 2px 4px 0; }
 .logo {
-  width: 42px; height: 42px; border-radius: 12px; flex: none;
+  width: 42px; height: 42px; border-radius: 14px; flex: none;
   display: grid; place-items: center;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: var(--grad);
   color: #fff; font-weight: 800; font-size: 12px; letter-spacing: .04em;
-  box-shadow: 0 6px 14px rgba(79, 70, 229, .3);
+  box-shadow: 0 8px 18px rgba(88, 166, 242, .35);
 }
 .brand h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
 .brand p { margin: 1px 0 0; font-size: 12px; color: var(--faint); }
@@ -83,7 +85,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
   position: relative;
 }
 .repo-item:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
-.repo-item.active { border-color: #c7c9f8; background: var(--accent-soft); box-shadow: 0 0 0 1px #c7c9f8 inset; }
+.repo-item.active { border-color: #bfe8d0; background: var(--accent-soft); box-shadow: 0 0 0 1px #bfe8d0 inset; }
 .repo-item .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .dot.ready { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
 .dot.busy { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft); animation: pulse 1.2s ease-in-out infinite; }
@@ -106,7 +108,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
   width: 100%; padding: 9px 11px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
   font: inherit; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; background: #fff;
 }
-.add-repo input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.add-repo input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(70, 185, 127, .14); }
 
 .sidebar-foot { font-size: 11px; color: var(--faint); text-align: center; padding-top: 4px; }
 
@@ -117,7 +119,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
   transition: all .15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
 .btn-sm { padding: 7px 12px; font-size: 12.5px; }
-.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, .28); }
+.btn-primary { background: var(--grad); color: #fff; box-shadow: 0 8px 20px rgba(88, 166, 242, .30); }
 .btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .btn-ghost { background: #fff; border-color: var(--border-strong); color: var(--text); }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
@@ -125,18 +127,20 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
 
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
-  background: var(--accent-soft); color: var(--accent);
+  padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: #fff; border: 1px solid var(--border); color: var(--muted);
+  box-shadow: 0 1px 2px rgba(23, 24, 26, .04);
 }
-.chip.green { background: var(--green-soft); color: var(--green); }
-.chip.red { background: var(--red-soft); color: var(--red); }
-.chip.amber { background: var(--amber-soft); color: #b54708; }
+.chip.green { color: #0d8a4f; }
+.chip.red { color: #d92d20; }
+.chip.amber { color: #b54708; }
 .chip-btn {
-  border: 1px solid var(--border-strong); background: #fff; color: var(--muted);
-  border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+  border: 1px solid var(--border); background: #fff; color: var(--muted);
+  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: all .15s; box-shadow: 0 1px 2px rgba(23, 24, 26, .04);
 }
-.chip-btn:hover { border-color: var(--accent); color: var(--accent); }
-.chip-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip-btn:hover { border-color: var(--border-strong); color: var(--text); box-shadow: 0 4px 12px rgba(23, 24, 26, .07); }
+.chip-btn.active { background: #17181a; border-color: #17181a; color: #fff; box-shadow: 0 6px 16px rgba(23, 24, 26, .18); }
 .badge {
   background: var(--accent); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700;
   padding: 2px 8px; margin-left: 8px;
@@ -164,7 +168,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
 .busy { padding: 16px 18px; margin-bottom: 16px; }
 .busy-text { display: flex; align-items: center; gap: 10px; font-weight: 600; margin-bottom: 10px; }
 .progress { height: 6px; background: #eef1f6; border-radius: 999px; overflow: hidden; }
-.progress > div { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .35s ease; }
+.progress > div { height: 100%; width: 0; border-radius: 999px; background: var(--grad); transition: width .35s ease; }
 .spinner {
   width: 14px; height: 14px; border-radius: 50%; flex: none;
   border: 2px solid var(--accent-soft); border-top-color: var(--accent);
@@ -181,7 +185,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
   padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
   font: inherit; font-size: 13px; background: #fff; color: var(--text); outline: none; cursor: pointer;
 }
-.filter select:focus, .filter input[type="date"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.filter select:focus, .filter input[type="date"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(70, 185, 127, .14); }
 .filter select { min-width: 170px; }
 .range-inputs { display: flex; align-items: center; gap: 8px; }
 .range-inputs .arrow { color: var(--faint); }
@@ -197,10 +201,10 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
 
 /* ---------- metric cards ---------- */
 .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.metric { padding: 15px 16px 13px; position: relative; transition: box-shadow .15s, transform .15s; }
+.metric { padding: 18px 18px 16px; position: relative; transition: box-shadow .15s, transform .15s; }
 .metric:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .metric-label { font-size: 12px; color: var(--muted); font-weight: 500; }
-.metric-value { font-size: 25px; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.metric-value { font-size: 28px; font-weight: 750; letter-spacing: -.03em; margin-top: 8px; font-variant-numeric: tabular-nums; }
 .metric.green .metric-value { color: var(--green); }
 .metric.red .metric-value { color: var(--red); }
 .metric.amber .metric-value { color: #b54708; }
@@ -248,14 +252,14 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .92em;
   width: 100%; padding: 9px 11px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
   font: inherit; font-size: 13px; outline: none; margin-bottom: 10px;
 }
-.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(70, 185, 127, .14); }
 
 .pick-row {
   display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer;
   border: 1px solid transparent;
 }
 .pick-row:hover { background: var(--accent-soft); }
-.pick-row.selected { background: var(--accent-soft); border-color: #c7c9f8; }
+.pick-row.selected { background: var(--accent-soft); border-color: #bfe8d0; }
 .pick-row .p-icon { font-size: 11px; color: var(--faint); width: 14px; text-align: center; flex: none; }
 .pick-row .p-name { font-weight: 600; font-size: 13px; }
 .pick-row .p-path { font-size: 11.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; margin-left: auto; }
