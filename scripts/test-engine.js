@@ -25,25 +25,26 @@ function checkMetrics(label, m, exp) {
 const { hashes } = buildFixture(fixtureDir);
 
 const count = await countCommits(fixtureDir, 'HEAD');
-check('parsed commit count (merges excluded)', count, 8);
+check('commit count incl. merge', count, 9);
 
 const parsed = await parseLog(fixtureDir, 'HEAD');
 const model = buildModel(parsed);
 
-check('model commit count', model.n, 8);
-check('merge commit excluded', model.hashIndex.has(hashes.c9), false);
+check('model commit count', model.n, 9);
+check('merge commit included in history', model.hashIndex.has(hashes.c9), true);
 check('non-merge commit included', model.hashIndex.has(hashes.c1), true);
+check('merge contributes no churn', model.cChurn[model.hashIndex.get(hashes.c9)], 0);
 
 // Authors: .mailmap must merge bob2@x.io into Bob <bob@x.io>
 check('author count after mailmap', model.authors.length, 2);
 check('author names', model.authors.map((a) => a.name).sort(), ['Alice Author', 'Bob']);
 
 const all = model.resolveRange({});
-check('|H| all commits', all.size, 8);
+check('|H| all commits', all.size, 9);
 
 // ---- object metrics over the whole history (hand-computed) ---------------
 const expAll = {
-  '': { added: 16, removed: 6, growth: 10, churn: 22, modifications: 7, modFreq: 7 / 8, churnRate: 22 / 8 },
+  '': { added: 16, removed: 6, growth: 10, churn: 22, modifications: 7, modFreq: 7 / 9, churnRate: 22 / 9 },
   'foo': { added: 13, removed: 4, growth: 9, churn: 17, modifications: 6 },
   'foo/sub': { added: 7, removed: 2, growth: 5, churn: 9, modifications: 2 },
   'foo/sub/deep.txt': { added: 7, removed: 2, growth: 5, churn: 9, modifications: 2 },
@@ -110,8 +111,8 @@ check('hotspot top file', hot[0].path, 'foo/sub/deep.txt');
 check('hotspot top churn', hot[0].churn, 9);
 
 const page = model.commitsInRange(all, null, 0, 5);
-check('commits page total', page.total, 8);
-check('commits page newest first', page.items[0].subject, 'c8');
+check('commits page total', page.total, 9);
+check('commits page newest first', page.items[0].subject, 'c9-merge');
 
 const tree = model.tree();
 check('tree root has children', tree.children.length > 0, true);

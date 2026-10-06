@@ -1,5 +1,5 @@
 // Builds a tiny deterministic repository used to verify the metric engine.
-// Layout of the scripted history (merge commit must be excluded from metrics):
+// Layout of the scripted history (the merge commit is part of |H| but has no diff):
 //
 //   c1  Alice  +.mailmap(1) +root.txt(2) +foo/bar.txt(3) +bin.dat(binary, not measured)
 //   c2  Alice  foo/bar.txt  +1 -1
@@ -9,7 +9,7 @@
 //   c6  Alice  +foo/sub/deep.txt(5)
 //   c7  Bob    (branch) foo/baz.txt +1 -1
 //   c8  Alice  (main)   foo/sub/deep.txt +2 -2
-//   c9  merge --no-ff  (ignored)
+//   c9  merge --no-ff  (counts in |H|, contributes no diff entries)
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
