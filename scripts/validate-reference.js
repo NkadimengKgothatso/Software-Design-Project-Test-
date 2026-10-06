@@ -5,7 +5,6 @@
 //   --full  also compare per-author rows for every object (fine on small repos)
 
 import fs from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { parseLog } from '../server/gitlog.js';
 import { buildModel } from '../server/model.js';
 
@@ -41,22 +40,10 @@ const t0 = Date.now();
 const parsed = await parseLog(dir, 'HEAD');
 const model = buildModel(parsed);
 const range = model.resolveRange({});
-console.log(`parsed ${parsed.commits.length} commits in ${((Date.now() - t0) / 1000).toFixed(2)}s`);
+console.log(`parsed ${parsed.commits.length} non-merge commits in ${((Date.now() - t0) / 1000).toFixed(2)}s`);
 
 const { rows } = parseCsv(fs.readFileSync(csvPath, 'utf8'));
 const refCommitCount = Number(rows[0].commit_count);
-
-// The reference CSVs were exported with the merge-excluded history as |H|:
-// their commit_count column equals `git rev-list --count --no-merges`, and
-// their modFreq/churnRate columns divide by that same value. The engine now
-// counts every commit GitHub shows (merges included) so |H| matches the
-// repository page; merge commits carry no diff, so all measured diff columns
-// are unchanged and still compared directly below. The two |H|-derived
-// columns are re-derived from the CSV's own numerators over the git-verified
-// |H|.
-const gitOut = (args) => execFileSync('git', ['-C', dir, 'rev-list', '--count', ...args, 'HEAD'], { encoding: 'utf8' }).trim();
-const noMergeCount = Number(gitOut(['--no-merges']));
-const fullCount = Number(gitOut([]));
 
 let pass = 0;
 let fail = 0;
@@ -70,10 +57,8 @@ const note = (ok, label, got, want) => {
 };
 const near = (a, b) => (Number.isFinite(a) && Number.isFinite(b) ? Math.abs(a - b) < 1e-9 : a === b);
 
-// commit set size: the CSV's merge-excluded count is a subset of |H|, and the
-// engine's |H| must equal the full history git (and GitHub) reports for the ref.
-note(range.size === fullCount, `commit set size |H| (= git rev-list --count, merges included)`, range.size, fullCount);
-note(fullCount - refCommitCount >= 0, `CSV commit_count is merge-excluded history of the same ref`, `${refCommitCount} <= ${fullCount}`, 'true');
+// commit set size
+note(range.size === refCommitCount, `commit set size |H|`, range.size, refCommitCount);
 
 const objIdFor = (type, path) => {
   if (type === 'repository') return model.rootId;
@@ -102,8 +87,8 @@ for (const [key, group] of byObject) {
     note(m.growth === Number(all.growth), `${key} growth`, m.growth, all.growth);
     note(m.churn === Number(all.churn), `${key} churn`, m.churn, all.churn);
     note(Number(all.modifications) === m.modifications, `${key} modifications`, m.modifications, all.modifications);
-    note(near(Number(all.modifications) / fullCount, m.modFreq), `${key} modFreq`, m.modFreq, Number(all.modifications) / fullCount);
-    note(near(Number(all.churn) / fullCount, m.churnRate), `${key} churnRate`, m.churnRate, Number(all.churn) / fullCount);
+    note(near(Number(all.modification_frequency), m.modFreq), `${key} modFreq`, m.modFreq, all.modification_frequency);
+    note(near(Number(all.churn_rate), m.churnRate), `${key} churnRate`, m.churnRate, all.churn_rate);
   }
 
   const authorRows = group.filter((r) => r.author !== 'ALL');
