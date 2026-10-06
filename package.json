@@ -1,0 +1,19 @@
+{
+  "name": "rat-repo-analysis-tool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Repo Analysis Tool (RAT): web dashboard computing file, directory, repository, commit-set and author metrics for git repositories.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node scripts/test-engine.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.4.0"
+  }
+}
