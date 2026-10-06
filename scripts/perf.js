@@ -21,11 +21,11 @@ for (const { label, dir } of specs) {
   const commits = await countCommits(dir);
   const tCount = Date.now() - t0;
 
-  const t1 = Date.now();
+  const parsed0 = Date.now();
   let lastProgress = 0;
   const parsed = await parseLog(dir, 'HEAD', { onProgress: (n) => { lastProgress = n; } });
-  const tParse = Date.now() - t1;
-  const merged = parsed.commits.length;
+  const tParse = Date.now() - parsed0;
+  const parsedCommits = parsed.commits.length;
 
   const t2 = Date.now();
   const model = buildModel(parsed);
@@ -51,7 +51,7 @@ for (const { label, dir } of specs) {
   rows.push({
     label,
     commits,
-    nonMerge: merged,
+    parsedCommits,
     tCount,
     tParse,
     tBuild,
@@ -59,15 +59,15 @@ for (const { label, dir } of specs) {
     rssMB: Math.round(process.memoryUsage().rss / 1048576),
     objects: model.objects.length,
     qt,
-    sawAll: lastProgress === merged,
+    sawAll: lastProgress === parsedCommits,
   });
 }
 
-console.log('\n| repo | commits | non-merge | count s | parse s | build s | queries ms | peak RSS MB | objects |');
-console.log('|------|---------|-----------|---------|---------|---------|------------|-------------|---------|');
+console.log('\n| repo | commits | parsed | count s | parse s | build s | queries ms | peak RSS MB | objects |');
+console.log('|------|---------|--------|---------|---------|---------|------------|-------------|---------|');
 for (const r of rows) {
   console.log(
-    `| ${r.label} | ${r.commits} | ${r.nonMerge} | ${(r.tCount / 1000).toFixed(2)} | ${(r.tParse / 1000).toFixed(2)}` +
+    `| ${r.label} | ${r.commits} | ${r.parsedCommits} | ${(r.tCount / 1000).toFixed(2)} | ${(r.tParse / 1000).toFixed(2)}` +
     ` | ${(r.tBuild / 1000).toFixed(2)} | ${r.tQuery} | ${r.rssMB} | ${r.objects} |`,
   );
 }
